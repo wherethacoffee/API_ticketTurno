@@ -20,9 +20,6 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 //Rutas
-app.use('/', (req, res) => {res
-    .status(200)
-    .json({ok: true, status: 200, message: 'Bienvenido a la API de tickets de turno'});});
 app.use('/admin', adminRoutes); 
 app.use('/alumno', alumnoRoutes); 
 app.use('/rep', repRoutes);
