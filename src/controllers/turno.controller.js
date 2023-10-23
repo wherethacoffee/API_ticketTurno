@@ -62,11 +62,46 @@ export const buscar = async (req, res) => {
     const idTurno = req.params.idTurno
     try {
         const turno = await Turnos.findOne({
+            include: [
+                {
+                    model: Representante,
+                    attributes: ['nombre', 'celular', 'telefono', 'correo']
+                },
+                {
+                    model: Alumno,
+                    attributes: ['curp']
+                },
+                {
+                    model: Municipio,
+                    attributes: ['nombre']
+                },
+                {
+                    model: Nivel,
+                    attributes: ['descripcion']
+                },
+                {
+                    model: Asunto,
+                    attributes: ['descripcion']
+                },
+                {
+                    model: Status,
+                    attributes: ['descripcion']
+                }
+            ],
             where: {
                 idTurno: idTurno
             }
-        })
-        res.send(turno)
+        });
+        const turnoTransformado = {
+            idTurno: turno.idTurno,
+            Representante: turno.Representante,
+            Alumno: turno.Alumno,
+            Municipio: turno.Municipio,
+            Nivel: turno.Nivel,
+            Asunto: turno.Asunto,
+            Status: turno.Status,
+        };
+        res.send(turnoTransformado)
     } catch (error) {
         res.status(404).json({
             ok: false,
