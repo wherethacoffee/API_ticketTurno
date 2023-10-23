@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listar, buscar, agregar, actualizar, eliminar } from "../controllers/admin.controller.js";
+import { listar, buscar, agregar, actualizar, eliminar, login, logout } from "../controllers/admin.controller.js";
 
 const router = Router();
 
@@ -15,5 +15,11 @@ router.put('/actualizar/:idAdmin', actualizar);
 
 //Eliminar
 router.delete('/eliminar/:idAdmin', eliminar);
+
+//Login
+router.post('/login', login);
+
+//Logout
+router.post('/logout', logout);
 
 export default router;
