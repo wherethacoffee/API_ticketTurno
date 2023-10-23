@@ -1,6 +1,7 @@
 import express from "express";
 import morgan from "morgan";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 //Import de las rutas del backend
 import adminRoutes from './routes/admins.routes.js'
@@ -17,11 +18,14 @@ import turnoRoutes from './routes/turnos.routes.js'
 const app = express();
 
 app.use(morgan('dev'));
+
 app.use(cors({
     origin: '*'
 }));
 
 app.use(express.json());
+
+app.use(cookieParser());
 
 //Rutas
 app.use('/admin', adminRoutes); 

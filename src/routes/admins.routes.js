@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { listar, buscar, agregar, actualizar, eliminar, login, logout } from "../controllers/admin.controller.js";
+import { listar, buscar, agregar, actualizar, eliminar, login, logout, profile } from "../controllers/admin.controller.js";
+import { authRequired } from '../middlewares/validateToken.js'
 
 const router = Router();
 
@@ -22,4 +23,6 @@ router.post('/login', login);
 //Logout
 router.post('/logout', logout);
 
+//User data
+router.get('/profile', authRequired, profile);
 export default router;

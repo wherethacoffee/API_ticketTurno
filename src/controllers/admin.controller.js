@@ -160,3 +160,22 @@ export const logout = (req, res) => {
 
     return res.sendStatus(200);
 }
+
+export const profile = async (req, res) => {
+    console.log(req.user);
+
+    const userFound = await Admins.findOne({
+        where: {
+            idAdmin: req.user.id
+        }
+    });
+
+    if (!userFound) 
+        return res.status(400).json({ message: 'Usuario no encontrado' });
+
+    return res.json({
+        id: userFound.id,
+        username: userFound.username,
+        password: userFound.pwd
+    })
+}
