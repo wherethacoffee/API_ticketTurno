@@ -1,4 +1,6 @@
 import Admins from '../models/admin.modelo.js'
+import bcrypt from 'bcryptjs'
+import { createAccessToken } from '../libs/jwt.js'
 
 export const listar = async (req, res) => {
     try {
@@ -36,15 +38,22 @@ export const agregar = async (req, res) => {
 
     try {
         await Admins.sync()
-        await Admins.create({
+
+        const hash_pwd = await bcrypt.hash(data.pwd, 10)
+
+        const userSaved = await Admins.create({
             username: data.username,
-            pwd: data.pwd
+            pwd: hash_pwd
         });
+
+        const token = await createAccessToken({id: userSaved.idAdmin});
+        res.cookie("token", token);
+
         res.status(201).json({
             ok: true,
             status: 201,
             message: 'Usuario creado exitosamente'
-        })
+        });
     } catch (error) {
         res.status(404).json({
             ok: false,
@@ -102,4 +111,52 @@ export const eliminar = async (req, res) => {
             message: error.message
         })
     }
+}
+
+export const login = async (req, res) => {
+    const data = req.body;
+
+    try {
+        const userFound = await Admins.findOne({
+            where: {
+                username: data.username
+            }
+        });
+
+        if (!userFound) return res.status(400).json({
+            ok: false,
+            status: 400,
+            message: "Usuario no encontrado"
+        });
+
+        const isMatch = await bcrypt.compare(data.pwd, userFound.pwd);
+        if (!isMatch) return res.status(400).json({
+            ok: false,
+            status: 400,
+            message: "Contraseña incorrecta"
+        });
+
+        const token = await createAccessToken({id: userFound.idAdmin});
+        res.cookie("token", token);
+
+        res.status(201).json({
+            ok: true,
+            status: 201,
+            message: 'Inicio se sesíon exitoso'
+        })
+    } catch (error) {
+        res.status(400).json({
+            ok: false,
+            status: 400,
+            message: error.message
+        })    
+    }
+}
+
+export const logout = (req, res) => {
+    res.cookie("token", "", {
+        expires: new Date(0)
+    });
+
+    return res.sendStatus(200);
 }
