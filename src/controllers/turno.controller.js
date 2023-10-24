@@ -1,3 +1,8 @@
+import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
+
+
 import Turnos from '../models/turno.modelo.js'
 import Representante from "../models/rep.modelo.js";
 import Alumno from "../models/alumno.modelo.js";
@@ -59,7 +64,7 @@ export const listar = async (req, res) => {
 };
 
 export const buscar = async (req, res) => {
-    const idTurno = req.params.idTurno
+    const { idTurno, curp_alumno } = req.params
     try {
         const turno = await Turnos.findOne({
             include: [
@@ -89,7 +94,8 @@ export const buscar = async (req, res) => {
                 }
             ],
             where: {
-                idTurno: idTurno
+                curp_alumno: curp_alumno,
+                idTurno: idTurno,
             }
         });
         const turnoTransformado = {
@@ -116,31 +122,37 @@ export const agregar = async (req, res) => {
 
     try {
         await Turnos.sync();
-
-        const existingTurno = await Turnos.findOne({
-            where: {
-                curp_alumno: data.curp_alumno,
-                idStatus: 1
-            }
+        const turnoCreado = await Turnos.create({
+            idRep: data.idRep,
+            curp_alumno: data.curp_alumno,
+            idMunicipio: data.idMunicipio,
+            idNivel: data.idNivel,
+            idAsunto: data.idAsunto,
+            idStatus: 1
         });
 
-        if (existingTurno) {
-            res.send('Un alumno ya está registrado para un trámite con esos datos, espere a su finalización para realizar otro')
-        } else {
-            await Turnos.create({
-                idRep: data.idRep,
-                curp_alumno: data.curp_alumno,
-                idMunicipio: data.idMunicipio,
-                idNivel: data.idNivel,
-                idAsunto: data.idAsunto,
-                idStatus: 1
-            });
+        const turnoEncontrado = await Turnos.findOne({
+            where: {
+                idTurno: turnoCreado.idTurno
+            }
+        });
+        
+        const pdfPath = await generarPDF(turnoEncontrado);
+        res.download(pdfPath, 'turno.pdf', (err) => {
+            if (err) {
+                res.status(500).json({
+                    ok: false,
+                    status: 500,
+                    message: 'Error al descargar el archivo'
+                })
+            }
             res.status(201).json({
                 ok: true,
                 status: 201,
-                message: 'Turno creado exitosamente'
+                message: turnoEncontrado
             })
-        }
+        })
+        
     } catch (error) {
         res.status(404).json({
             ok: false,
@@ -180,22 +192,45 @@ export const actualizar = async (req, res) => {
     }
 };
 
-export const statusRealizado = async (req, res) => {
+export const cambiarStatus = async (req, res) => {
     const idTurno = req.params.idTurno;
 
     try {
-        await Turnos.update({
-            idStatus: 2
-        }, {
+        
+        const turnoEncontrado = await Turnos.findOne({
             where: {
-                idTurno: idTurno
+                idTurno: idTurno,
             }
-        })
-        res.status(200).json({
-            ok: true,
-            status: 200,
-            message: 'Turno ha cambiado a "Realizado"'
-        })
+        });
+
+        if (turnoEncontrado.idStatus === 1) {
+            await Turnos.update({
+                idStatus: 2
+            }, {
+                where: {
+                    idTurno: idTurno
+                }
+            });
+            res.status(200).json({
+                ok: true,
+                status: 200,
+                message: 'El status del turno ha cambiado a "Realizado"'
+            });
+        } else {
+            await Turnos.update({
+                idStatus: 1
+            }, {
+                where: {
+                    idTurno: idTurno
+                }
+            });
+            res.status(200).json({
+                ok: true,
+                status: 200,
+                message: 'El status del turno ha cambiado a "Pendiente"'
+            });
+        }
+        
     } catch (error) {
         res.status(404).json({
             ok: false,
@@ -226,4 +261,28 @@ export const eliminar = async (req, res) => {
             message: error.message
         })
     }
+};
+
+const generarPDF = (data) => {
+    return new Promise((resolve, reject) => {
+        const pdf = new PDFDocument();
+        const pdfPath = path.join(__dirname, '..', 'temp', 'turno.pdf');
+        const stream = fs.createWriteStream(pdfPath);
+
+        pdf.pipe(stream);
+        pdf.fontSize(14).text('Información del turno:');
+        pdf.fontSize(12).text(`Número de turno: ${data.idTurno}`);
+        pdf.fontSize(12).text(`CURP del alumno: ${data.curp_alumno}`);
+
+        pdf.end();
+
+        stream.on('finish', () => {
+            resolve(pdfPath)
+        });
+
+        stream.on('error', (err) => {
+            reject(err);
+        });
+    });
 }
+
