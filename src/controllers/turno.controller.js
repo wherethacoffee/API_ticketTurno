@@ -197,7 +197,7 @@ export const agregar = async (req, res) => {
 };
 
 export const actualizar = async (req, res) => {
-    const { curp_alumno } = req.params
+    const { idTurno, curp_alumno } = req.params
     const data = req.body;
 
     try {
@@ -209,7 +209,8 @@ export const actualizar = async (req, res) => {
             idAsunto: data.idAsunto,
         }, {
             where: {
-                curp_alumno: curp_alumno
+                curp_alumno: curp_alumno,
+                idTurno: idTurno,
             }
         })
         res.status(200).json({

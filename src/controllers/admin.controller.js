@@ -139,9 +139,9 @@ export const login = async (req, res) => {
         const token = await createAccessToken({id: userFound.idAdmin});
         res.cookie("token", token);
 
-        res.status(201).json({
+        res.status(200).json({
             ok: true,
-            status: 201,
+            status: 200,
             message: 'Inicio se sesíon exitoso'
         })
     } catch (error) {
