@@ -1,6 +1,5 @@
 import PDFDocument from 'pdfkit';
-import fs from 'fs';
-import path from 'path';
+import qrcode from 'qrcode';
 
 
 import Turnos from '../models/turno.modelo.js'
@@ -10,6 +9,7 @@ import Municipio from "../models/municipio.modelo.js";
 import Nivel from "../models/nivel.modelo.js";
 import Asunto from "../models/asunto.modelo.js";
 import Status from "../models/status.modelo.js";
+import { Stream } from 'stream';
 
 export const listar = async (req, res) => {
     try {
@@ -132,27 +132,52 @@ export const agregar = async (req, res) => {
         });
 
         const turnoEncontrado = await Turnos.findOne({
+            include: [
+                {
+                    model: Representante,
+                    attributes: ['nombre', 'celular', 'telefono', 'correo']
+                },
+                {
+                    model: Alumno,
+                    attributes: ['curp', 'nombre', 'paterno', 'materno']
+                },
+                {
+                    model: Municipio,
+                    attributes: ['nombre']
+                },
+                {
+                    model: Nivel,
+                    attributes: ['descripcion']
+                },
+                {
+                    model: Asunto,
+                    attributes: ['descripcion']
+                },
+                {
+                    model: Status,
+                    attributes: ['descripcion']
+                }
+            ],
             where: {
                 idTurno: turnoCreado.idTurno
             }
         });
-        
-        const pdfPath = await generarPDF(turnoEncontrado);
-        res.download(pdfPath, 'turno.pdf', (err) => {
-            if (err) {
-                res.status(500).json({
-                    ok: false,
-                    status: 500,
-                    message: 'Error al descargar el archivo'
-                })
-            }
-            res.status(201).json({
-                ok: true,
-                status: 201,
-                message: turnoEncontrado
-            })
-        })
-        
+
+        const turnoTransformado = {
+            idTurno: turnoEncontrado.idTurno,
+            Representante: turnoEncontrado.Representante,
+            Alumno: turnoEncontrado.Alumno,
+            Municipio: turnoEncontrado.Municipio,
+            Nivel: turnoEncontrado.Nivel,
+            Asunto: turnoEncontrado.Asunto,
+            Status: turnoEncontrado.Status,
+        };
+
+        console.log(turnoEncontrado);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=turno.pdf');
+
+        generarPDF(turnoTransformado, res);
     } catch (error) {
         res.status(404).json({
             ok: false,
@@ -263,26 +288,35 @@ export const eliminar = async (req, res) => {
     }
 };
 
-const generarPDF = (data) => {
-    return new Promise((resolve, reject) => {
-        const pdf = new PDFDocument();
-        const pdfPath = path.join(__dirname, '..', 'temp', 'turno.pdf');
-        const stream = fs.createWriteStream(pdfPath);
+const generarPDF = async (turno, res) => {
+    const doc = new PDFDocument();
+    const qrData = `CURP del alumno solicitante: ${turno.Alumno.curp}`;
+    const qrImage = await qrcode.toDataURL(qrData);
 
-        pdf.pipe(stream);
-        pdf.fontSize(14).text('Información del turno:');
-        pdf.fontSize(12).text(`Número de turno: ${data.idTurno}`);
-        pdf.fontSize(12).text(`CURP del alumno: ${data.curp_alumno}`);
 
-        pdf.end();
+    doc.pipe(res);
 
-        stream.on('finish', () => {
-            resolve(pdfPath)
-        });
-
-        stream.on('error', (err) => {
-            reject(err);
-        });
-    });
-}
+    doc.fontSize(20).text('Información del turno', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(16).text(`Turno: ${turno.idTurno}`, { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(14).text('Datos del alumno');
+    doc.fontSize(12).text(`CURP del alumno: ${turno.Alumno.curp}
+                        \nNombre completo: ${turno.Alumno.nombre} ${turno.Alumno.paterno} ${turno.Alumno.materno}
+                        \nNivel académico: ${turno.Nivel.descripcion}`);
+    doc.moveDown();
+    doc.fontSize(14).text('Datos del tutor');
+    doc.fontSize(12).text(`Nombre completo: ${turno.Representante.nombre}
+                        \nCelular: ${turno.Representante.celular}
+                        \nTeléfono: ${turno.Representante.telefono}
+                        \nCorreo: ${turno.Representante.correo}`);
+    doc.moveDown();
+    doc.fontSize(14).text('Datos adicionales');
+    doc.fontSize(12).text(`Asunto a tratar: ${turno.Asunto.descripcion}
+                        \nMunicipio: ${turno.Municipio.nombre}
+                        \nStatus actual del turno: ${turno.Status.descripcion}`);
+    doc.moveDown();
+    doc.image(qrImage, 450, 150, { width: 100, height: 100 });
+    doc.end();
+};
 

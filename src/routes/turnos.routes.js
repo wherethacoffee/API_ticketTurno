@@ -16,5 +16,4 @@ router.put('/cambiarStatus/:idTurno', cambiarStatus);
 
 //Eliminar
 router.delete('/eliminar/:idTurno', eliminar);
-
 export default router;
