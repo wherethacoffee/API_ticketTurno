@@ -5,7 +5,8 @@ import { listar,
     actualizar, 
     eliminar, 
     cambiarStatus, 
-    contarStatusTotal } from "../controllers/turno.controller.js";
+    contarStatusTotal,
+    contarStatusPorMunicipio } from "../controllers/turno.controller.js";
 
 const router = Router();
 
@@ -25,4 +26,5 @@ router.delete('/eliminar/:idTurno', eliminar);
 
 //Graficas
 router.get('/statusTotal', contarStatusTotal)
+router.get('/statusPorMunicipio/:idMunicipio', contarStatusPorMunicipio);
 export default router;

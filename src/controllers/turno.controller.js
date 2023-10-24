@@ -354,6 +354,47 @@ export const contarStatusTotal = async (req, res) => {
     }
 };
 
+export const contarStatusPorMunicipio = async (req, res) => {
+    const idMunicipio = req.params.idMunicipio;
+
+    try {
+        const counts = await Turnos.findAll({
+            attributes: [
+                [sequelize.fn('COUNT', sequelize.col('idTurno')), 'totalTurnos'],
+                [sequelize.fn('SUM', sequelize.literal('CASE WHEN idStatus = 1 THEN 1 ELSE 0 END')), 'pendiente'],
+                [sequelize.fn('SUM', sequelize.literal('CASE WHEN idStatus = 2 THEN 1 ELSE 0 END')), 'realizado'],
+            ],
+            where: {
+                idMunicipio: idMunicipio,
+            },
+        });
+
+        if (counts.length > 0) {
+            const { totalTurnos, pendiente, realizado } = counts[0].dataValues;
+
+            res.send({
+                totalTurnos,
+                pendiente,
+                realizado,
+            });
+        } else {
+            res.status(404).json({
+                ok: false,
+                status: 404,
+                message: 'No se encontraron registros de Turno para el municipio especificado.'
+            });
+        }
+    } catch (error) {
+        res.status(404).json({
+            ok: false,
+            status: 404,
+            message: error.message
+        });
+    }
+};
+
+
+
 
 
 
