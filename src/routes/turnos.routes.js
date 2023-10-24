@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { listar, buscar, agregar, actualizar, eliminar, cambiarStatus } from "../controllers/turno.controller.js";
+import { listar, 
+    buscar, 
+    agregar, 
+    actualizar, 
+    eliminar, 
+    cambiarStatus, 
+    contarStatusTotal } from "../controllers/turno.controller.js";
 
 const router = Router();
 
@@ -16,4 +22,7 @@ router.put('/cambiarStatus/:idTurno', cambiarStatus);
 
 //Eliminar
 router.delete('/eliminar/:idTurno', eliminar);
+
+//Graficas
+router.get('/statusTotal', contarStatusTotal)
 export default router;

@@ -1,5 +1,6 @@
 import PDFDocument from 'pdfkit';
 import qrcode from 'qrcode';
+import sequelize from 'sequelize';
 
 
 import Turnos from '../models/turno.modelo.js'
@@ -9,7 +10,6 @@ import Municipio from "../models/municipio.modelo.js";
 import Nivel from "../models/nivel.modelo.js";
 import Asunto from "../models/asunto.modelo.js";
 import Status from "../models/status.modelo.js";
-import { Stream } from 'stream';
 
 export const listar = async (req, res) => {
     try {
@@ -319,4 +319,42 @@ const generarPDF = async (turno, res) => {
     doc.image(qrImage, 450, 150, { width: 100, height: 100 });
     doc.end();
 };
+
+export const contarStatusTotal = async (req, res) => {
+    try {
+        const counts = await Turnos.findAll({
+            attributes: [
+                [sequelize.fn('COUNT', sequelize.col('idTurno')), 'totalTurnos'],
+                [sequelize.fn('SUM', sequelize.literal('CASE WHEN idStatus = 1 THEN 1 ELSE 0 END')), 'pendiente'],
+                [sequelize.fn('SUM', sequelize.literal('CASE WHEN idStatus = 2 THEN 1 ELSE 0 END')), 'realizado'],
+            ]
+        });
+
+        if (counts.length > 0) {
+            const { totalTurnos, pendiente, realizado } = counts[0].dataValues;
+
+            res.send({
+                totalTurnos,
+                pendiente,
+                realizado,
+            });
+        } else {
+            res.status(404).json({
+                ok: false,
+                status: 404,
+                message: 'No se encontraron registros de Turno.'
+            });
+        }
+    } catch (error) {
+        res.status(404).json({
+            ok: false,
+            status: 404,
+            message: error.message
+        });
+    }
+};
+
+
+
+
 
