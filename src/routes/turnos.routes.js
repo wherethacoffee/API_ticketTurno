@@ -18,7 +18,7 @@ router.get('/buscar/:nTurno/:curp_alumno', buscar);
 router.post('/agregar', agregar);
 
 //Actualizar
-router.put('/actualizar/:idTurno', actualizar);
+router.put('/actualizar/:curp_alumno', actualizar);
 router.put('/cambiarStatus/:idTurno', cambiarStatus);
 
 //Eliminar
