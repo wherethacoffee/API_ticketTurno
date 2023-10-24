@@ -45,6 +45,7 @@ export const listar = async (req, res) => {
         const turnosTransformados = turnos.map((turno) => {
             return {
                 idTurno: turno.idTurno,
+                nTurno: turno.nTurno,
                 Representante: turno.Representante,
                 Alumno: turno.Alumno,
                 Municipio: turno.Municipio,
@@ -64,7 +65,7 @@ export const listar = async (req, res) => {
 };
 
 export const buscar = async (req, res) => {
-    const { idTurno, curp_alumno } = req.params
+    const { nTurno, curp_alumno } = req.params
     try {
         const turno = await Turnos.findOne({
             include: [
@@ -95,11 +96,12 @@ export const buscar = async (req, res) => {
             ],
             where: {
                 curp_alumno: curp_alumno,
-                idTurno: idTurno,
+                nTurno: nTurno,
             }
         });
         const turnoTransformado = {
             idTurno: turno.idTurno,
+            nTurno: turno.nTurno,
             Representante: turno.Representante,
             Alumno: turno.Alumno,
             Municipio: turno.Municipio,
@@ -119,10 +121,16 @@ export const buscar = async (req, res) => {
 
 export const agregar = async (req, res) => {
     const data = req.body;
+    const idMunicipio = data.idMunicipio
 
     try {
         await Turnos.sync();
+
+        const ultimoTurno = await obtenerUltimoNumTurno(idMunicipio);
+        const nuevoTurno = ultimoTurno + 1;
+
         const turnoCreado = await Turnos.create({
+            nTurno: nuevoTurno,
             idRep: data.idRep,
             curp_alumno: data.curp_alumno,
             idMunicipio: data.idMunicipio,
@@ -165,6 +173,7 @@ export const agregar = async (req, res) => {
 
         const turnoTransformado = {
             idTurno: turnoEncontrado.idTurno,
+            nTurno: turnoEncontrado.nTurno,
             Representante: turnoEncontrado.Representante,
             Alumno: turnoEncontrado.Alumno,
             Municipio: turnoEncontrado.Municipio,
@@ -298,7 +307,7 @@ const generarPDF = async (turno, res) => {
 
     doc.fontSize(20).text('Información del turno', { align: 'center' });
     doc.moveDown();
-    doc.fontSize(16).text(`Turno: ${turno.idTurno}`, { align: 'center' });
+    doc.fontSize(16).text(`Turno: ${turno.nTurno}`, { align: 'center' });
     doc.moveDown();
     doc.fontSize(14).text('Datos del alumno');
     doc.fontSize(12).text(`CURP del alumno: ${turno.Alumno.curp}
@@ -393,7 +402,21 @@ export const contarStatusPorMunicipio = async (req, res) => {
     }
 };
 
+async function obtenerUltimoNumTurno(idMunicipio) {
+    try {
+        const ultimoTurno = await Turnos.findOne({
+            attributes: [[sequelize.fn('max', sequelize.col('nTurno')), 'ultimoTurno']],
+            where: { idMunicipio: idMunicipio }
+        });
 
+        if (ultimoTurno) {
+            return ultimoTurno.getDataValue('ultimoTurno') || 0;
+        }
+        return 0;
+    } catch (error) {
+        throw error;
+    }
+}
 
 
 

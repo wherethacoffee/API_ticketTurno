@@ -18,6 +18,13 @@ Turno.init({
         primaryKey: true,
         autoIncrement: true
     },
+    nTurno: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+            isNumeric: true
+        }
+    },
     idRep: {
         type: DataTypes.INTEGER,
         allowNull: false,

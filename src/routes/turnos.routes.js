@@ -12,7 +12,7 @@ const router = Router();
 
 //Consultas
 router.get('/listar', listar);
-router.get('/buscar/:idTurno/:curp_alumno', buscar);
+router.get('/buscar/:nTurno/:curp_alumno', buscar);
 
 //Agregar
 router.post('/agregar', agregar);
