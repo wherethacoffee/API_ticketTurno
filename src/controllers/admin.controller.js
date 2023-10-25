@@ -68,9 +68,10 @@ export const actualizar = async (req, res) => {
     const data = req.body;
 
     try {
+        const hash_pwd = await bcrypt.hash(data.pwd, 10)
         await Admins.update({
             username: data.username,
-            pwd: data.pwd
+            pwd: hash_pwd
         }, {
             where: {
                 idAdmin: id
