@@ -216,6 +216,54 @@ export const actualizar = async (req, res) => {
                 idTurno: idTurno,
             }
         })
+        const turnoEncontrado = await Turnos.findOne({
+            include: [
+                {
+                    model: Representante,
+                    attributes: ['nombre', 'celular', 'telefono', 'correo']
+                },
+                {
+                    model: Alumno,
+                    attributes: ['curp', 'nombre', 'paterno', 'materno']
+                },
+                {
+                    model: Municipio,
+                    attributes: ['nombre']
+                },
+                {
+                    model: Nivel,
+                    attributes: ['descripcion']
+                },
+                {
+                    model: Asunto,
+                    attributes: ['descripcion']
+                },
+                {
+                    model: Status,
+                    attributes: ['descripcion']
+                }
+            ],
+            where: {
+                idTurno: turnoCreado.idTurno
+            }
+        });
+
+        const turnoTransformado = {
+            idTurno: turnoEncontrado.idTurno,
+            nTurno: turnoEncontrado.nTurno,
+            Representante: turnoEncontrado.Representante,
+            Alumno: turnoEncontrado.Alumno,
+            Municipio: turnoEncontrado.Municipio,
+            Nivel: turnoEncontrado.Nivel,
+            Asunto: turnoEncontrado.Asunto,
+            Status: turnoEncontrado.Status,
+        };
+
+        console.log(turnoEncontrado);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=turno.pdf');
+
+        generarPDF(turnoTransformado, res);
         res.status(200).json({
             ok: true,
             status: 200,
