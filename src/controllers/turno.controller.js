@@ -201,7 +201,10 @@ export const actualizar = async (req, res) => {
     const data = req.body;
 
     try {
+        const ultimoTurno = await obtenerUltimoNumTurno(idMunicipio);
+        const nuevoTurno = ultimoTurno + 1;
         await Turnos.update({
+            nTurno: nuevoTurno,
             idRep: data.idRep,
             curp_alumno: data.curp_alumno,
             idMunicipio: data.idMunicipio,
