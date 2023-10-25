@@ -13,6 +13,24 @@ export const listar = async (req, res) => {
     }
 };
 
+export const listarPorEstado = async (req, res) => {
+    const idEstado = req.params.idEstado;
+    try {
+        const municipios = await Municipios.findAll({
+            where: {
+                idEstado: idEstado
+            }
+        });
+        res.send(municipios);
+    } catch (error) {
+        res.status(404).json({
+            ok: false,
+            status: 404,
+            message: error.message
+        })
+    }
+}
+
 export const buscar = async (req, res) => {
     const id = req.params.idMunicipio
     try {
