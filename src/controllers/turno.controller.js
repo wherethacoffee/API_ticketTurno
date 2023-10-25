@@ -313,6 +313,8 @@ const generarPDF = async (turno, res) => {
     doc.moveDown();
     doc.fontSize(16).text(`Turno: ${turno.nTurno}`, { align: 'center' });
     doc.moveDown();
+    doc.fontSize(16).text(`Id del Turno: ${turno.idTurno}`, { align: 'center' });
+    doc.moveDown();
     doc.fontSize(14).text('Datos del alumno');
     doc.fontSize(12).text(`CURP del alumno: ${turno.Alumno.curp}
                         \nNombre completo: ${turno.Alumno.nombre} ${turno.Alumno.paterno} ${turno.Alumno.materno}
